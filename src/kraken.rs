@@ -2,7 +2,7 @@ use reqwest;
 use std::collections::HashMap;
 
 
-pub async fn get_info(key: &str, value: &str) -> Result<serde_json::Value, reqwest::Error> {
+pub async fn get_info(key: &str, value: &str) -> Result<reqwest::Response, reqwest::Error> {
 
     let mut params = HashMap::new();
     params.insert(key, value);
@@ -13,8 +13,8 @@ pub async fn get_info(key: &str, value: &str) -> Result<serde_json::Value, reqwe
         .send()
         .await?;
 
-        //println!("{}", serde_json::to_string_pretty(&json_body).unwrap());
-
-    Ok(res.json::<serde_json::Value>().await?)
-
+    Ok(res)
 }
+
+#[cfg(test)]
+mod test;
