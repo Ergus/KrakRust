@@ -3,9 +3,15 @@ name = "rust-http-json"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "pykraken"
+crate-type = ["cdylib"]
+path = "src/pykraken.rs"
+
 [dependencies]
 reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1" }
 serde_json = { version = "1" }
-
+pyo3 = {version = "0.21.1", features = ["extension-module"]}
+pyo3-asyncio = { version = "0.14", features = ["tokio-runtime"] }

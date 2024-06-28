@@ -1,7 +1,6 @@
 use reqwest;
 use std::collections::HashMap;
 
-
 pub async fn get_info(key: &str, value: &str) -> Result<reqwest::Response, reqwest::Error> {
 
     let mut params = HashMap::new();
