@@ -13,5 +13,6 @@ reqwest = { version = "0.12", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1" }
 serde_json = { version = "1" }
-pyo3 = {version = "0.21.1", features = ["extension-module"]}
-pyo3-asyncio = { version = "0.14", features = ["tokio-runtime"] }
+pyo3 = {version = "0.20.0", features = ["extension-module"]}
+pyo3-asyncio = { version = "0.20", features = ["attributes", "async-std-runtime"] }
+async-std = "1.9"

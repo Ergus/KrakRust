@@ -48,8 +48,10 @@ fn convert_json_to_dict<'py>(py: Python<'py>, value: Value) -> PyResult<Bound<'p
 }
 
 #[pyfunction]
-async fn get_info<'py>(py: Python<'py>, key: &String, value: &String) -> PyResult<Bound<'py, PyDict>>
+fn get_info<'py>(py: Python<'py>, key: &String, value: &String) -> PyResult<Bound<'py, PyDict>>
 {
+    pyo3_asyncio::async_std::future_into_py(py, async {
+
     let data = kraken::get_info(key, value).await.map_err(|e| {
         pyo3::exceptions::PyException::new_err(format!("Request failed: {}", e))
     })?;
@@ -64,6 +66,7 @@ async fn get_info<'py>(py: Python<'py>, key: &String, value: &String) -> PyResul
     } else  {
         Err(pyo3::exceptions::PyException::new_err(format!("Request failed with status code: {}", data.status())))
     }
+    })
 }
 
 
