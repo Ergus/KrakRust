@@ -16,4 +16,9 @@ pub async fn get_info(key: &str, value: &str) -> Result<reqwest::Response, reqwe
 }
 
 #[cfg(test)]
-mod test;
+mod tests {
+
+    use super::*;
+
+    mod test_kraken;
+}

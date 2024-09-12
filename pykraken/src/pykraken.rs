@@ -1,8 +1,8 @@
+use kraken;
+
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyAny};
 use serde_json::Value;
-mod kraken;
-
 
 fn json_value_to_pyobject(py: Python, value: &serde_json::Value) -> PyObject {
     match value {
@@ -49,7 +49,8 @@ fn convert_json_to_dict(py: Python, value: Value) -> PyResult<Py<PyDict>>
 }
 
 #[pyfunction]
-fn get_info(py: Python, key: String, value: String) -> PyResult<&PyAny> {
+fn get_info(py: Python, key: String, value: String) -> PyResult<&PyAny>
+{
     pyo3_asyncio::tokio::future_into_py_with_locals(
         py,
         pyo3_asyncio::tokio::get_current_locals(py)?,
