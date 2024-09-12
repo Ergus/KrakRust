@@ -16,5 +16,5 @@ tests = [
     "pytest",
 ]
 [tool.maturin]
-python-source = "python"
+#python-source = "python"
 features = ["pyo3/extension-module"]

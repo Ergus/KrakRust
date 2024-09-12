@@ -12,11 +12,11 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import asyncio
 import pykraken as pyk
 import json
 
-def main():
+async def main():
     try:
         res = await pyk.get_info("pair", "BTCEUR")
 
@@ -27,4 +27,4 @@ def main():
         print(f"Error occurred: {e}")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
