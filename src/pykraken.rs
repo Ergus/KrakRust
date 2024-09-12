@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
+use pyo3::types::{PyDict, PyList, PyAny};
 use serde_json::Value;
 mod kraken;
 
@@ -21,11 +21,11 @@ fn json_value_to_pyobject(py: Python, value: &serde_json::Value) -> PyObject {
         }
         Value::String(s) => s.into_py(py),
         Value::Array(arr) => {
-            let py_list = PyList::new_bound(py, arr.into_iter().map(|x| json_value_to_pyobject(py, x)));
+            let py_list = PyList::new(py, arr.into_iter().map(|x| json_value_to_pyobject(py, x)));
             py_list.into_py(py)
         }
         Value::Object(obj) => {
-            let py_dict = PyDict::new_bound(py);
+            let py_dict = PyDict::new(py);
             for (k, v) in obj {
                 py_dict.set_item(k, json_value_to_pyobject(py, v)).unwrap();
             }
@@ -34,45 +34,44 @@ fn json_value_to_pyobject(py: Python, value: &serde_json::Value) -> PyObject {
     }
 }
 
-fn convert_json_to_dict<'py>(py: Python<'py>, value: Value) -> PyResult<Bound<'py, PyDict>>
+fn convert_json_to_dict(py: Python, value: Value) -> PyResult<Py<PyDict>>
 {
     if let Value::Object(map) = value {
-        let dict = PyDict::new_bound(py);
+        let dict = PyDict::new(py);
         for (key, val) in map.iter() {
             dict.set_item(key, json_value_to_pyobject(py, val)).unwrap();
         }
         Ok(dict.into())
     } else {
-        Err(pyo3::exceptions::PyTypeError::new_err("Expected a JSON object"))
+        let args = "Expected a JSON object";
+        Err(pyo3::exceptions::PyTypeError::new_err(args))
     }
 }
 
 #[pyfunction]
-fn get_info<'py>(py: Python<'py>, key: &String, value: &String) -> PyResult<Bound<'py, PyDict>>
-{
-    pyo3_asyncio::async_std::future_into_py(py, async {
-
-    let data = kraken::get_info(key, value).await.map_err(|e| {
-        pyo3::exceptions::PyException::new_err(format!("Request failed: {}", e))
-    })?;
-
-    if data.status().is_success() {
-
-        let json_data: Value = data.json().await.map_err(|e| {
-            pyo3::exceptions::PyException::new_err(format!("Failed to parse JSON: {}", e))
-        })?;
-
-        convert_json_to_dict(py, json_data)
-    } else  {
-        Err(pyo3::exceptions::PyException::new_err(format!("Request failed with status code: {}", data.status())))
-    }
-    })
+fn get_info(py: Python, key: String, value: String) -> PyResult<&PyAny> {
+    pyo3_asyncio::tokio::future_into_py_with_locals(
+        py,
+        pyo3_asyncio::tokio::get_current_locals(py)?,
+        async move {
+            match kraken::get_info(&key, &value).await {
+                Ok(response) => match response.json::<Value>().await {
+                    Ok(json_data) => {
+                        Python::with_gil(|py| {
+                            convert_json_to_dict(py, json_data).map(|dict| dict.into_py(py))
+                        })
+                    },
+                    Err(e) => Err(pyo3::exceptions::PyException::new_err(format!("Failed to parse JSON: {}", e))),
+                },
+                Err(e) => Err(pyo3::exceptions::PyException::new_err(format!("Request failed: {}", e))),
+            }
+        }
+    )
 }
-
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn pykraken(m: &Bound<'_, PyModule>) -> PyResult<()>
+fn pykraken(_py: Python, m: &PyModule) -> PyResult<()>
 {
     m.add_function(wrap_pyfunction!(get_info, m)?)?;
 
